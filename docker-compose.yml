@@ -1,0 +1,172 @@
+services:
+  # MariaDB Database
+  database:
+    image: mariadb:10.11
+    container_name: discador_mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./config/mariadb:/etc/mysql/conf.d
+      - ./scripts/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "3307:3306"  # Alterado de 3310 para 3307 (mais comum)
+    networks:
+      - discador_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: discador_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6380:6379"  # Alterado de 6379 para 6380
+    networks:
+      - discador_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PHP-FPM Application
+  php:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: discador_php
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - ASTERISK_HOST=asterisk
+    volumes:
+      - ./src:/var/www/html
+      - ./logs/php:/var/log/php
+      - ./config/php/php.ini:/usr/local/etc/php/php.ini
+      - asterisk_sounds:/var/lib/asterisk/sounds
+      - asterisk_spool:/var/spool/asterisk
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - discador_network
+    healthcheck:
+      test: ["CMD-SHELL", "php -v || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: discador_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"   # Alterado de 88 para 8080 (padrão desenvolvimento)
+      - "8443:443"  # Alterado de 443 para 8443
+    volumes:
+      - ./src:/var/www/html
+      - ./config/nginx:/etc/nginx/conf.d
+      - ./logs/nginx:/var/log/nginx
+      - nginx_ssl:/etc/nginx/ssl
+    depends_on:
+      - php
+    networks:
+      - discador_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  # Asterisk PBX
+  asterisk:
+    image: mlan/asterisk:latest
+    container_name: discador_asterisk
+    restart: unless-stopped
+    environment:
+      - SYSLOG_LEVEL=4
+      - SYSLOG_OPTIONS=-SDt
+      - DB_HOST=database
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./config/asterisk:/etc/asterisk
+      - asterisk_sounds:/var/lib/asterisk/sounds
+      - asterisk_spool:/var/spool/asterisk
+      - asterisk_recordings:/var/lib/asterisk/recordings
+      - ./logs/asterisk:/var/log/asterisk
+      - asterisk_lib:/var/lib/asterisk
+    ports:
+      - "5060:5060/udp"  # SIP
+      - "5060:5060/tcp"  # SIP
+      - "5038:5038"      # AMI (Asterisk Manager Interface)
+      - "8188:8088"      # WebSocket para WebRTC (alterado para 8188)
+      - "8189:8089"      # WebSocket TLS para WebRTC (alterado para 8189)
+      - "10000-10099:10000-10099/udp"  # RTP
+      - "4569:4569/udp"  # IAX2
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - discador_network
+    healthcheck:
+      test: ["CMD", "asterisk", "-x", "core show version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Portainer for container management (optional)
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: discador_portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - discador_network
+
+volumes:
+  mariadb_data:
+    driver: local
+  redis_data:
+    driver: local
+  asterisk_sounds:
+    driver: local
+  asterisk_spool:
+    driver: local
+  asterisk_recordings:
+    driver: local
+  asterisk_lib:
+    driver: local
+  nginx_ssl:
+    driver: local
+  portainer_data:
+    driver: local
+
+networks:
+  discador_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
