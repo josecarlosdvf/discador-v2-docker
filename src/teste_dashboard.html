@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste Final do Dashboard</title>
+    <script>
+        function testarAPI() {
+            console.log('Testando API...');
+            
+            fetch('api/discador-control.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    action: 'control',
+                    command: 'status'
+                })
+            })
+            .then(response => response.text())
+            .then(text => {
+                console.log('Resposta raw:', text);
+                
+                // Tenta encontrar o JSON dentro da resposta
+                let jsonMatch = text.match(/\{.*\}/s);
+                if (jsonMatch) {
+                    try {
+                        const data = JSON.parse(jsonMatch[0]);
+                        console.log('JSON parseado:', data);
+                        
+                        const resultado = document.getElementById('resultado');
+                        if (data.success) {
+                            resultado.innerHTML = '<div style="color: green;">✓ Sucesso: ' + data.output + '</div>';
+                        } else {
+                            resultado.innerHTML = '<div style="color: red;">✗ Erro: ' + (data.error || 'Comando falhou') + '</div>';
+                        }
+                    } catch (e) {
+                        console.error('Erro ao parsear JSON:', e);
+                        document.getElementById('resultado').innerHTML = '<div style="color: red;">✗ Erro no JSON: ' + e.message + '</div>';
+                    }
+                } else {
+                    console.error('JSON não encontrado na resposta');
+                    document.getElementById('resultado').innerHTML = '<div style="color: red;">✗ JSON não encontrado na resposta</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Erro de comunicação:', error);
+                document.getElementById('resultado').innerHTML = '<div style="color: red;">✗ Erro de comunicação: ' + error.message + '</div>';
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Teste Final do Dashboard</h1>
+    <button onclick="testarAPI()">Testar API de Controle</button>
+    <div id="resultado" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+</body>
+</html>

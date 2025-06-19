@@ -431,7 +431,9 @@ $pageDescription = 'Painel de Controle do Sistema Discador v2.0';
                     console.error('Erro ao carregar status do discador:', error);
                     appendToConsole('Erro ao carregar status: ' + error.message, 'error');
                 });
-        }        function executeDiscadorCommand(command) {
+        }
+
+        function executeDiscadorCommand(command) {
             appendToConsole('Executando comando: ' + command + '...', 'info');
             
             fetch('api/discador-control.php', {
@@ -444,30 +446,21 @@ $pageDescription = 'Painel de Controle do Sistema Discador v2.0';
                     command: command
                 })
             })
-            .then(response => response.text())
-            .then(text => {
-                // Tenta encontrar o JSON dentro da resposta
-                let jsonMatch = text.match(/\{.*\}/s);
-                if (jsonMatch) {
-                    try {
-                        const data = JSON.parse(jsonMatch[0]);
-                        if (data.success) {
-                            appendToConsole(data.output || 'Comando executado com sucesso', 'success');
-                            setTimeout(loadDiscadorStatus, 2000);
-                        } else {
-                            appendToConsole('Erro: ' + (data.error || 'Comando falhou'), 'error');
-                        }
-                    } catch (e) {
-                        appendToConsole('Erro no processamento da resposta: ' + e.message, 'error');
-                    }
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    appendToConsole(data.output || 'Comando executado com sucesso', 'success');
+                    setTimeout(loadDiscadorStatus, 2000);
                 } else {
-                    appendToConsole('Resposta inválida do servidor', 'error');
+                    appendToConsole('Erro: ' + (data.error || 'Comando falhou'), 'error');
                 }
             })
             .catch(error => {
                 appendToConsole('Erro de comunicação: ' + error.message, 'error');
             });
-        }        function executeMaintenanceCommand(command) {
+        }
+
+        function executeMaintenanceCommand(command) {
             appendToConsole('Executando manutenção: ' + command + '...', 'info');
             
             fetch('api/discador-control.php', {
@@ -480,29 +473,20 @@ $pageDescription = 'Painel de Controle do Sistema Discador v2.0';
                     command: command
                 })
             })
-            .then(response => response.text())
-            .then(text => {
-                // Tenta encontrar o JSON dentro da resposta
-                let jsonMatch = text.match(/\{.*\}/s);
-                if (jsonMatch) {
-                    try {
-                        const data = JSON.parse(jsonMatch[0]);
-                        if (data.success) {
-                            appendToConsole(data.output || 'Manutenção executada com sucesso', 'success');
-                        } else {
-                            appendToConsole('Erro: ' + (data.error || 'Manutenção falhou'), 'error');
-                        }
-                    } catch (e) {
-                        appendToConsole('Erro no processamento da resposta: ' + e.message, 'error');
-                    }
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    appendToConsole(data.output || 'Manutenção executada com sucesso', 'success');
                 } else {
-                    appendToConsole('Resposta inválida do servidor', 'error');
+                    appendToConsole('Erro: ' + (data.error || 'Manutenção falhou'), 'error');
                 }
             })
             .catch(error => {
                 appendToConsole('Erro de comunicação: ' + error.message, 'error');
             });
-        }        function executeDiagnostic() {
+        }
+
+        function executeDiagnostic() {
             appendToConsole('Executando diagnóstico completo...', 'info');
             
             fetch('api/discador-control.php', {
@@ -514,23 +498,12 @@ $pageDescription = 'Painel de Controle do Sistema Discador v2.0';
                     action: 'diagnostic'
                 })
             })
-            .then(response => response.text())
-            .then(text => {
-                // Tenta encontrar o JSON dentro da resposta
-                let jsonMatch = text.match(/\{.*\}/s);
-                if (jsonMatch) {
-                    try {
-                        const data = JSON.parse(jsonMatch[0]);
-                        if (data.success) {
-                            appendToConsole(data.output || 'Diagnóstico executado com sucesso', 'success');
-                        } else {
-                            appendToConsole('Erro: ' + (data.error || 'Diagnóstico falhou'), 'error');
-                        }
-                    } catch (e) {
-                        appendToConsole('Erro no processamento da resposta: ' + e.message, 'error');
-                    }
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    appendToConsole(data.output || 'Diagnóstico executado com sucesso', 'success');
                 } else {
-                    appendToConsole('Resposta inválida do servidor', 'error');
+                    appendToConsole('Erro: ' + (data.error || 'Diagnóstico falhou'), 'error');
                 }
             })
             .catch(error => {

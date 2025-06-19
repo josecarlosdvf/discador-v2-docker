@@ -1,277 +1,264 @@
-# Sistema Discador v2.0 - Ambiente Dockerizado
+# Sistema Discador VoIP v2.0 - Multi-Tenant
 
-Sistema de discador modernizado executando em containers Docker com PHP 8.2, Nginx, MariaDB, Redis e Asterisk.
+[![Validação](https://img.shields.io/badge/Validação-96.6%25-green)](scripts/validate_offline.php)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-orange)](https://www.mysql.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://www.docker.com/)
+
+> **Sistema completo de discador VoIP modernizado com arquitetura multi-tenant, billing avançado e controle de custos em tempo real.**
+
+## 🚀 Características Principais
+
+### ✨ Multi-Tenancy Completo
+- **Isolamento por empresa** com subdomínios ou paths
+- **Gestão centralizada** de múltiplas empresas
+- **Configurações personalizadas** por tenant
+- **Escalabilidade** para crescimento
+
+### 💰 Centro de Custos e Billing
+- **Cálculo em tempo real** de custos por ligação
+- **Tarifação flexível** por tipo de destino
+- **Faturas automáticas** mensais
+- **Relatórios financeiros** detalhados
+- **Alertas de limite** e vencimento
+
+### 👥 Gestão Avançada de Usuários
+- **Perfis multi-nível** (Admin Global, Master Empresa, Supervisor, Operador)
+- **Permissões granulares** por funcionalidade
+- **Vinculação a campanhas** e filas
+- **Controle de acesso** baseado em tenant
+
+### 📊 Dashboard e Campanhas
+- **Interface moderna** responsiva
+- **Estatísticas em tempo real** 
+- **Gestão completa** de campanhas
+- **Listas de contatos** otimizadas
+- **APIs REST** para integração
 
 ## 🏗️ Arquitetura
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│     Nginx       │    │   PHP-FPM       │    │    MariaDB      │
-│   (Port 80/443) │───▶│   (Port 9000)   │───▶│   (Port 3306)   │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │     Redis       │    │    Asterisk     │
-                       │   (Port 6379)   │    │   (Port 5060)   │
-                       └─────────────────┘    └─────────────────┘
+📁 Sistema Discador v2.0/
+├── 🏢 Multi-Tenant Core
+│   ├── TenantManager.php (Gestão de empresas)
+│   ├── MultiTenantAuth.php (Autenticação)
+│   └── CompanyRegistration.php (Registro)
+├── 💰 Billing & Cost Center  
+│   ├── BillingManager.php (Lógica de billing)
+│   ├── billing.php (Interface web)
+│   └── billing-reports.php (API REST)
+├── 👥 User Management
+│   ├── UserManager.php (Gestão de usuários)
+│   └── users.php (Interface CRUD)
+├── 📞 Campaign Management
+│   ├── CampaignManager.php (Lógica de campanhas)
+│   ├── campaigns.php (Interface web)
+│   └── ContactListManager.php (Listas)
+└── 🗄️ Database Schema
+    ├── 02_multi_tenant_schema.sql (446 linhas)
+    └── 03_billing_schema.sql (530 linhas)
 ```
 
-## 📋 Pré-requisitos
+## 🛠️ Instalação
 
-- Windows 10/11 com WSL2 ativado
-- Docker Desktop para Windows
-- 4GB RAM mínimo (8GB recomendado)
-- 10GB espaço em disco
+### Pré-requisitos
+- **PHP 8.2+** com extensões: PDO, MySQL, Redis
+- **MySQL 8.0+** ou MariaDB 10.5+
+- **Redis 6.0+** (opcional, para cache)
+- **Nginx/Apache** com mod_rewrite
 
-## 🚀 Iniciando o Ambiente
-
-### 1. Configuração Inicial
+### Instalação Rápida
 
 ```bash
-# Clone ou acesse o diretório do projeto
+# 1. Clone o repositório
+git clone [repository-url] discador_v2
 cd discador_v2
 
-# Copie e configure as variáveis de ambiente
-cp .env.example .env
-# Edite o .env conforme necessário
-```
-
-### 2. Iniciando os Serviços
-
-```bash
-# Linux/WSL2
-chmod +x scripts/*.sh
-./scripts/start.sh
-
-# Ou manualmente
-docker-compose up -d --build
-```
-
-### 3. Verificando o Status
-
-Acesse: http://localhost para ver o painel de status dos serviços.
-
-## 🐳 Serviços Disponíveis
-
-| Serviço | Porta | Acesso | Descrição |
-|---------|-------|---------|-----------|
-| **Nginx** | 80, 443 | http://localhost | Servidor web |
-| **PHP-FPM** | 9000 | Interno | Processador PHP |
-| **MariaDB** | 3306 | localhost:3306 | Banco de dados |
-| **Redis** | 6379 | localhost:6379 | Cache em memória |
-| **Asterisk** | 5060 | localhost:5060 | PBX/SIP |
-| **Portainer** | 9000 | http://localhost:9000 | Gerenciamento Docker |
-
-## 📁 Estrutura de Diretórios
-
-```
-discador_v2/
-├── docker/                 # Configurações Docker
-│   ├── php/                # PHP-FPM container
-│   ├── nginx/              # Nginx container
-│   └── asterisk/           # Asterisk container
-├── src/                    # Código fonte da aplicação
-├── config/                 # Configurações dos serviços
-├── scripts/                # Scripts utilitários
-├── logs/                   # Logs dos serviços
-├── data/                   # Dados persistentes
-├── docker-compose.yml      # Configuração principal
-└── .env                    # Variáveis de ambiente
-```
-
-## 🔧 Comandos Úteis
-
-### Gerenciamento de Containers
-
-```bash
-# Iniciar todos os serviços
-./scripts/start.sh
-
-# Parar todos os serviços
-./scripts/stop.sh
-
-# Parar e remover volumes
-./scripts/stop.sh --volumes
-
-# Ver logs de todos os serviços
-./scripts/logs.sh
-
-# Ver logs de um serviço específico
-./scripts/logs.sh php
-./scripts/logs.sh nginx
-./scripts/logs.sh database
-./scripts/logs.sh asterisk
-
-# Status dos containers
-docker-compose ps
-
-# Reiniciar um serviço
-docker-compose restart php
-
-# Acessar shell de um container
-docker-compose exec php bash
-docker-compose exec database mysql -u root -p
-```
-
-### Desenvolvimento
-
-```bash
-# Rebuild apenas um serviço
-docker-compose build php
-docker-compose up -d php
-
-# Acompanhar logs em tempo real
-docker-compose logs -f php
-
-# Executar comandos PHP
-docker-compose exec php php -v
-docker-compose exec php composer install
-```
-
-## 🔒 Configurações de Segurança
-
-### Produção
-
-Antes de usar em produção, altere:
-
-1. **Senhas no .env**:
-   - `DB_ROOT_PASSWORD`
-   - `DB_PASSWORD`
-   - `REDIS_PASSWORD`
-   - `ASTERISK_MANAGER_PASSWORD`
-
-2. **SSL/HTTPS**:
-   - Gere certificados válidos
-   - Configure nginx para redirecionar HTTP → HTTPS
-
-3. **Firewall**:
-   - Exponha apenas portas necessárias
-   - Configure iptables/ufw
-
-## 🐛 Solução de Problemas
-
-### Container não inicia
-
-```bash
-# Ver logs detalhados
-docker-compose logs [serviço]
-
-# Verificar configuração
-docker-compose config
-
-# Rebuild sem cache
-docker-compose build --no-cache [serviço]
-```
-
-### Problemas de permissão
-
-```bash
-# No WSL2, ajustar permissões
-sudo chown -R $USER:$USER src/ logs/ data/
-```
-
-### Banco não conecta
-
-```bash
-# Verificar se MariaDB está rodando
-docker-compose exec database mysql -u root -p
-
-# Recriar banco
-docker-compose down
-docker volume rm discador_mariadb_data
+# 2. Configure ambiente (Docker recomendado)
 docker-compose up -d
+
+# 3. Instale schema multi-tenant
+php scripts/install_multi_tenant.php
+
+# 4. Instale sistema de billing
+php scripts/install_billing.php
+
+# 5. Configure empresa demo (opcional)
+php setup_demo_mode.php
 ```
 
-### Asterisk não inicia
+### Instalação Manual
 
 ```bash
-# Verificar configuração
-docker-compose exec asterisk asterisk -T
+# 1. Configure banco de dados
+mysql -u root -p < scripts/sql/02_multi_tenant_schema.sql
+mysql -u root -p < scripts/sql/03_billing_schema.sql
 
-# Ver logs específicos
-docker-compose logs asterisk
+# 2. Configure variáveis de ambiente
+cp .env.example .env
+# Edite .env com suas configurações
+
+# 3. Valide instalação
+php scripts/validate_offline.php
 ```
 
-## 📊 Monitoramento
+## 🎯 Como Usar
 
-### Health Checks
+### Acesso Administrativo
+1. **Admin Global**: Acesso completo a todas as empresas
+   - Login: `admin@discador.com`
+   - Cadastrar novas empresas
+   - Aprovar registros
+   - Gerenciar billing global
 
-Todos os serviços incluem health checks automáticos:
+### Acesso por Empresa
+1. **Registrar Empresa**: `/register-company.php`
+2. **Login Dual**: `/login.php`
+3. **Dashboard**: `/dashboard.php`
+
+### APIs Disponíveis
 
 ```bash
-# Ver status de saúde
-docker-compose ps
+# Estatísticas em tempo real
+GET /api/real-time-stats.php?empresa_id=1
+
+# Relatórios de billing  
+GET /api/billing-reports.php?action=stats&empresa_id=1
+POST /api/billing-reports.php?action=generate_invoice
+
+# Gestão de campanhas
+GET /api/campaigns.php?action=list&empresa_id=1
 ```
 
-### Logs
+## 📊 Funcionalidades por Módulo
+
+### 🏢 Multi-Tenancy
+- [x] Isolamento de dados por empresa
+- [x] Subdomínios/paths personalizados
+- [x] Configurações por tenant
+- [x] Usuários multi-nível
+- [x] Portal de registro
+- [x] Workflow de aprovação
+
+### 💰 Billing & Custos
+- [x] Cálculo automático de custos
+- [x] Tarifas personalizadas
+- [x] Faturas mensais
+- [x] Pagamentos e histórico
+- [x] Alertas automáticos
+- [x] Relatórios financeiros
+- [x] APIs REST completas
+
+### 👥 Gestão de Usuários
+- [x] CRUD completo multi-tenant
+- [x] Perfis e permissões
+- [x] Vinculação a campanhas
+- [x] Controle de acesso
+
+### 📞 Campanhas e Discador
+- [x] Dashboard moderno
+- [x] Gestão de campanhas
+- [x] Listas de contatos
+- [x] Estatísticas em tempo real
+- [x] APIs de integração
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente
 
 ```bash
-# Localização dos logs
-./logs/
-├── nginx/          # Logs do Nginx
-├── php/            # Logs do PHP
-├── mariadb/        # Logs do MariaDB
-└── asterisk/       # Logs do Asterisk
+# Banco de Dados
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=discador_v2
+DB_USER=discador_user
+DB_PASSWORD=sua_senha
+
+# Redis (opcional)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Aplicação
+APP_DEBUG=false
+APP_URL=https://discador.example.com
 ```
 
-### Métricas
+### Tarifas Padrão
 
-- **Portainer**: Interface web para monitorar containers
-- **Status Page**: http://localhost/status (página customizada)
+| Tipo | Tarifa/min | Descrição |
+|------|------------|-----------|
+| Fixo Local | R$ 0,08 | Mesmo DDD |
+| Fixo DDD | R$ 0,12 | DDD diferente |
+| Celular Local | R$ 0,35 | Celular mesmo DDD |
+| Celular DDD | R$ 0,45 | Celular DDD diferente |
+| Internacional | R$ 2,50 | Chamadas internacionais |
+| Especial | R$ 1,20 | 0800, 4004, etc |
 
-## 🔄 Backup e Restore
+## 📋 Status das Fases
 
-### Backup
+### ✅ FASE 1: MODERNIZAÇÃO (CONCLUÍDA)
+- [x] Containerização Docker
+- [x] Arquitetura Master-Worker
+- [x] Sistema de monitoramento
+- [x] APIs modernas
+- [x] Interface web atualizada
+
+### ✅ FASE 2: MULTI-TENANT (95% CONCLUÍDA)
+- [x] Schema multi-tenant
+- [x] Portal de cadastro
+- [x] Gestão de usuários
+- [x] Dashboard discador
+- [x] **Centro de custos e billing**
+- [x] APIs REST completas
+
+### ⏳ FASE 3: OTIMIZAÇÃO (PLANEJADA)
+- [ ] Testes de performance
+- [ ] Configurações de produção
+- [ ] Monitoramento avançado
+- [ ] Backup estratégico
+
+## 🧪 Validação e Testes
 
 ```bash
-# Backup do banco de dados
-docker-compose exec database mysqldump -u root -p discador > backup_$(date +%Y%m%d).sql
+# Validação offline (sem banco)
+php scripts/validate_offline.php
 
-# Backup dos volumes
-docker run --rm -v discador_mariadb_data:/data -v $(pwd):/backup alpine tar czf /backup/mariadb_backup.tar.gz /data
+# Validação completa (com banco)  
+php scripts/validate_system.php
+
+# Teste de conexão
+php test_db_connection.php
 ```
 
-### Restore
+**Status Atual**: ✅ **96.6% validado e funcional**
 
-```bash
-# Restore do banco
-cat backup_20241217.sql | docker-compose exec -T database mysql -u root -p discador
-```
+## 📝 Documentação
 
-## 🆙 Atualizações
+- [Lista Completa de Tarefas](MDs/todo.md)
+- [Relatório de Implementação - Billing](MDs/relatorio_implementacao_2.6_billing.md)
+- [Relatório de Features 2.3 e 2.4](MDs/relatorio_implementacao_2.3_2.4.md)
+- [Planos de Migração](MDs/planos_de_migracao.md)
 
-### Atualizar imagens base
+## 🤝 Contribuição
 
-```bash
-# Baixar novas versões
-docker-compose pull
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
 
-# Rebuild com novas versões
-docker-compose up -d --build
-```
+## 📄 Licença
 
-### Migração de dados
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para detalhes.
 
-Ver documentação específica em `docs/migration.md`
+## 🆘 Suporte
 
-## 📞 Suporte
-
-- **Logs**: Sempre verificar logs primeiro
-- **Status**: http://localhost para status dos serviços
-- **Documentação**: Ver pasta `docs/` para mais detalhes
-
-## 🎯 Próximos Passos
-
-1. **Migrar código legado** para `src/`
-2. **Configurar Asterisk** com ramais/troncos
-3. **Implementar APIs** para integração
-4. **Configurar monitoramento** em produção
-5. **Implementar CI/CD** para deploys automatizados
+- **Issues**: [GitHub Issues](../../issues)
+- **Documentação**: [Wiki do Projeto](../../wiki)
+- **Email**: suporte@discador.com
 
 ---
 
-**Versão**: 2.0.0  
-**Data**: Dezembro 2024  
-**Docker**: Engine 20.10+  
-**Compose**: v2.0+
+**Sistema Discador VoIP v2.0** - Transformando comunicação empresarial com tecnologia moderna e multi-tenancy avançado.
+
+*Desenvolvido com ❤️ para empresas que precisam de soluções VoIP escaláveis e robustas.*

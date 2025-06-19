@@ -1,0 +1,8 @@
+# Opção 1: Rollback Git
+git checkout v2.0.0-docker-stable
+
+# Opção 2: Restore do Backup Local
+Copy-Item -Recurse "../discador_v2_backup_20250618_0014/*" "."
+
+# Opção 3: Clone Novo do GitHub
+git clone https://github.com/josecarlosdvf/discador-v2-docker.git
