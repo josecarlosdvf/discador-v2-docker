@@ -1,7 +1,7 @@
 <?php
 namespace DiscadorV2\Core;
 
-require_once __DIR__ . '/TenantManager.php';
+require_once 'TenantManager.php';
 
 /**
  * Sistema de Autenticação Multi-Tenant
@@ -9,7 +9,9 @@ require_once __DIR__ . '/TenantManager.php';
  */
 class MultiTenantAuth {
     private $tenantManager;
-    private $db;    public function __construct() {
+    private $db;
+    
+    public function __construct() {
         $this->tenantManager = TenantManager::getInstance();
         require_once __DIR__ . '/../config/pdo.php';
         $this->db = $GLOBALS['pdo'];

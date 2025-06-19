@@ -163,18 +163,18 @@ try {
     $pdo = new PDO('mysql:host=localhost;port=3307;dbname=discador;charset=utf8mb4', 'root', 'root123');
     
     $test_value = 'teste_' . time();
-    $pdo->exec("INSERT INTO activity_logs (usuario, acao, detalhes, data_acao) VALUES ('sistema', 'teste_persistencia', '$test_value', NOW())");
-    
-    // Verificar se foi inserido
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM activity_logs WHERE detalhes = ?");
-    $stmt->execute([$test_value]);
+    $details = json_encode(['message' => 'Teste de persistência', 'value' => $test_value]);
+    $pdo->exec("INSERT INTO activity_logs (usuario, action, details, created_at) VALUES ('sistema', 'teste_persistencia', '$details', NOW())");
+      // Verificar se foi inserido
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM activity_logs WHERE details LIKE ?");
+    $stmt->execute(['%' . $test_value . '%']);
     $count = $stmt->fetchColumn();
     
     if ($count > 0) {
         echo "✅ Persistência: Funcionando (inserção confirmada)\n";
         
         // Limpar registro de teste
-        $pdo->prepare("DELETE FROM activity_logs WHERE detalhes = ?")->execute([$test_value]);
+        $pdo->prepare("DELETE FROM activity_logs WHERE details LIKE ?")->execute(['%' . $test_value . '%']);
         echo "✅ Limpeza: Registro de teste removido\n";
     } else {
         echo "❌ Persistência: Falha na inserção\n";

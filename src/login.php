@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 
 // Se já está logado, redireciona
@@ -11,8 +14,8 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
-require_once __DIR__ . '/Core/MultiTenantAuth.php';
-require_once __DIR__ . '/Core/TenantManager.php';
+require_once 'Core/MultiTenantAuth.php';
+require_once 'Core/TenantManager.php';
 
 $auth = new \DiscadorV2\Core\MultiTenantAuth();
 $tenantManager = \DiscadorV2\Core\TenantManager::getInstance();

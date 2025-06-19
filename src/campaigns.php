@@ -1,9 +1,9 @@
 <?php
 session_start();
 
-require_once __DIR__ . '/Core/MultiTenantAuth.php';
-require_once __DIR__ . '/Core/TenantManager.php';
-require_once __DIR__ . '/Core/CampaignManager.php';
+require_once 'Core/MultiTenantAuth.php';
+require_once 'Core/TenantManager.php';
+require_once 'Core/CampaignManager.php';
 
 $auth = new \DiscadorV2\Core\MultiTenantAuth();
 $tenantManager = \DiscadorV2\Core\TenantManager::getInstance();
